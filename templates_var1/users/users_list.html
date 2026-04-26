@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Участники{% endblock %}
+
+{% block content %}
+<h1>Участники</h1>
+
+<ul>
+    {% for user in users %}
+        <li>
+            <a href="{% url 'users:user_detail' user.id %}">
+                {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="Аватар" width="40">
+                {% else %}
+                    <img src="{% static 'images/default-avatar.png' %}" alt="Аватар" width="40">
+                {% endif %}
+
+                {{ user.name }} {{ user.surname }}
+            </a>
+        </li>
+    {% empty %}
+        <li>Пользователей пока нет</li>
+    {% endfor %}
+</ul>
+{% endblock %}

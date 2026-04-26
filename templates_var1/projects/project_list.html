@@ -10,23 +10,34 @@
 {% with page_id="projects-list" %}
 {% block content %}
 <div class="project-container">
+
     <div class="project-header">
         <h2 class="project-title">Актуальные проекты</h2>
-        {% if projects %}
-            <a href="/projects/create-project" class="black-button">+ Создать проект</a>
+
+        {% if request.user.is_authenticated %}
+            <a href="{% url 'create_project' %}" class="black-button">
+                + Создать проект
+            </a>
         {% endif %}
     </div>
-    <p class="project-subtitle">Найдите интересный проект и присоединитесь к команде</p>
+
+    <p class="project-subtitle">
+        Найдите интересный проект и присоединитесь к команде
+    </p>
 
     <div class="projects-grid">
         {% for project in projects %}
-        {% include 'includes/project-card.html' %}
+            {% include 'includes/project-card.html' %}
         {% empty %}
-        {% include 'includes/empty-project-card.html' with empty_title="Пока нет проектов" empty_message="Создавайте проекты и делитесь ими с другими пользователями!" button_link="/projects/create-project" button_text="+ Создать проект" %}
+            {% include 'includes/empty-project-card.html' with
+                empty_title="Пока нет проектов"
+                empty_message="Создавайте проекты и делитесь ими с другими пользователями!"
+                button_link=project_create_url
+                button_text="+ Создать проект"
+            %}
         {% endfor %}
     </div>
-    {% include 'includes/project-fav-toggle.js' %}
-</div>
 
+</div>
 {% endblock %}
 {% endwith %}

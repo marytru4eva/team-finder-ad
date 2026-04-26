@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ project.title }}{% endblock %}
+{% block title %}{{ project.name }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/project_details.css' %}">
 {% endblock %}
 
-{% with page_id="project" %}
 {% block content %}
 <div class="project-container">
     <div class="project-card">
@@ -39,76 +38,105 @@
         </div>
 
         <div class="project-card-body">
-                <h2 class="project-title">{{ project.name }}</h2>
-                <p class="project-description">{{ project.description }}</p>
+            <h2 class="project-title">{{ project.name }}</h2>
+            <p class="project-description">{{ project.description }}</p>
 
-                {% if project.github_url %}
+            {% if project.github_url %}
                 <p class="project-link">
                     {% include 'includes/svg/github.html' %}
                     <a href="{{ project.github_url }}" target="_blank">Репозиторий на GitHub</a>
                 </p>
-                {% endif %}
-        </div>
-        <div class="project-actions">
-            <a href="#"
-               class="black-button black-button-share share-button"
-               data-url="/projects/{{ project.id }}">
-                {% include 'includes/svg/share.html' %}
-            </a>
-            {% if user.id == project.owner.id %}
-                <a href="/projects/{{ project.id }}/edit" class="black-button">
-                    {% include 'includes/svg/pen.html' %}
-                    Редактировать
-                </a>
-                {% if project.status == "open" %}
-                    <button class="black-button" id="complete-project-btn" data-id="{{ project.id }}">
-                        Завершить проект
-                    </button>
-                {% endif %}
-            {% else %}
-                {% if user.is_authenticated %}
-                    <button id="participate-btn" class="black-button"
-                            data-project="{{ project.id }}"
-                            data-user-id="{{ request.user.id }}"
-                            data-user-name="{{ request.user.name }} {{ request.user.surname }}"
-                            data-user-avatar="{% if request.user.avatar %}{{ request.user.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
-                    >
-                        {% if request.user in project.participants.all %}
-                            Отказаться от участия
-                        {% else %}
-                            Участвовать
-                        {% endif %}
-                    </button>
-                {% endif %}
             {% endif %}
         </div>
 
+        <div class="project-actions">
+            {% if request.user == project.owner %}
+                <a href="{% url 'edit_project' project.id %}" class="black-button">
+                    {% include 'includes/svg/pen.html' %}
+                    Редактировать
+                </a>
+
+                {% if project.status == 'open' %}
+                    <form method="post" action="{% url 'close_project' project.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="black-button">Завершить проект</button>
+                    </form>
+                {% endif %}
+            {% else %}
+                {% if request.user.is_authenticated and project.status == 'open' %}
+                    {% if request.user in project.participants.all %}
+                        <form method="post" action="{% url 'leave_project' project.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="black-button">Отказаться от участия</button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'join_project' project.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="black-button">Участвовать</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    <div class="project-skills-card">
+        <h3>Необходимые навыки</h3>
+
+        <div class="skills-list">
+            {% for skill in project.skills.all %}
+                <span class="skill-item">
+                    {{ skill.name }}
+
+                    {% if request.user == project.owner %}
+                        <form method="post"
+                                action="{% url 'remove_skill' project.id skill.id %}"
+                                style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit">×</button>
+                        </form>
+                    {% endif %}
+                </span>
+            {% empty %}
+                <p>Нет навыков</p>
+            {% endfor %}
+        </div>
+
+        {% if request.user == project.owner %}
+             <form method="post" action="{% url 'add_skill' project.id %}">
+                {% csrf_token %}
+                <select name="skill_id">
+                    {% for skill in all_skills %}
+                        <option value="{{ skill.id }}">{{ skill.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Добавить</button>
+            </form>
+        {% endif %}
     </div>
 
     <div class="project-participants-card">
-    <h3>Участники проекта (<span id="participants-count" style="display:inline">{{ project.participants.all|length }}</span>)</h3>
-    <div id="participants-list" class="participants-list">
-        {% for member in project.participants.all %}
-        <a href="/users/{{ member.id }}" id="participant-{{ member.id }}">
-            <div class="participant-item">
-                {% if member.avatar %}
-                    <img src="{{ member.avatar.url }}" alt="Аватар" class="participant-avatar">
-                {% else %}
-                    <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="participant-avatar">
-                {% endif %}
-                <div class="participant-info">
-                    <span class="participant-name">{{ member.name }} {{ member.surname }}</span>
-                    <span class="participant-role">
-                        {% if member.id == project.owner.id %}Автор проекта{% else %}Участник{% endif %}
-                    </span>
-                </div>
-            </div>
-        </a>
-        {% empty %}
-        <p id="no-participants">Пока нет участников</p>
-        {% endfor %}
+        <h3>Участники проекта ({{ project.participants.all|length }})</h3>
+        <div class="participants-list">
+            {% for member in project.participants.all %}
+                <a href="/users/{{ member.id }}" id="participant-{{ member.id }}">
+                    <div class="participant-item">
+                        {% if member.avatar %}
+                            <img src="{{ member.avatar.url }}" alt="Аватар" class="participant-avatar">
+                        {% else %}
+                            <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="participant-avatar">
+                        {% endif %}
+                        <div class="participant-info">
+                            <span class="participant-name">{{ member.name }} {{ member.surname }}</span>
+                            <span class="participant-role">
+                                {% if member.id == project.owner.id %}Автор проекта{% else %}Участник{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            {% empty %}
+                <p>Пока нет участников</p>
+            {% endfor %}
         </div>
     </div>
 </div>
 {% endblock %}
-{% endwith %}

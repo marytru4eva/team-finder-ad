@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if is_edit %}
+        Редактировать проект
+    {% else %}
+        Создать проект
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<h1>
+    {% if is_edit %}
+        Редактировать проект
+    {% else %}
+        Создать проект
+    {% endif %}
+</h1>
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ form.errors }}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        {% if is_edit %}
+            Сохранить изменения
+        {% else %}
+            Опубликовать
+        {% endif %}
+    </button>
+</form>
+{% endblock %}

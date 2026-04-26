@@ -1,0 +1,47 @@
+<h1>Список проектов</h1>
+<form method="get">
+    <select name="skill">
+        <option value="">Все</option>
+        {% for skill in all_skills %}
+            <option value="{{ skill.name }}"
+                {% if skill.name == active_skill %}selected{% endif %}>
+                {{ skill.name }}
+            </option>
+        {% endfor %}
+    </select>
+    <button type="submit">Фильтр</button>
+</form>
+<ul>
+    {% for project in projects %}
+        <li>
+            <a href="{% url 'project_detail' project.id %}">{{ project.name }}</a> — {{ project.owner.name }} {{ project.owner.surname }}<br>
+            {{ project.description }}<br>
+            Дата создания: {{ project.created_at|date:"d.m.Y" }}<br>
+            <p>Участники: 
+                {% for user in project.participants.all %}
+                    {{ user.name }} {{ user.surname }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    Нет участников
+                {% endfor %}
+            </p>
+            <p>Навыки:
+                {% for skill in project.skills.all %}
+                    <span class="skill-item" data-skill-id="{{ skill.id }}">
+                        {{ skill.name }}
+                        {% if request.user == project.owner %}
+                            <button class="remove-skill" data-skill-id="{{ skill.id }}">×</button>
+                        {% endif %}
+                    </span>
+                    {% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    Нет навыков
+                {% endfor %}
+            </p>
+        </li>
+    {% empty %}
+        <p>Проектов пока нет</p>
+    {% endfor %}
+</ul>
+{% if request.user.is_authenticated %}
+    <a href="{% url 'create_project' %}" class="btn btn-primary">+ Создать проект</a>
+{% endif %}

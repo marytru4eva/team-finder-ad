@@ -1,34 +1,32 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Вход{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/auth.css' %}">
-{% endblock %}
-
 {% block content %}
-<div class="auth-card">
-    <h2>Вход в систему</h2>
-    <form method="post">
-        {% csrf_token %}
+<h1>Вход в систему</h1>
 
-        {{ form.non_field_errors }}
+{% if error %}
+    <p style="color: red;">{{ error }}</p>
+{% endif %}
 
-        <div class="form-field">
-            {{ form.email.label_tag }}
-            {{ form.email }}
-            {{ form.email.errors }}
-        </div>
+<form method="post">
+    {% csrf_token %}
 
-        <div class="form-field">
-            {{ form.password.label_tag }}
-            {{ form.password }}
-            {{ form.password.errors }}
-        </div>
+    <p>
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" required>
+    </p>
 
-        <button type="submit">Войти</button>
-    </form>
-    <p class="auth-link">Нет аккаунта? <a href="{% url 'users:register' %}">Зарегистрироваться</a></p>
-</div>
+    <p>
+        <label for="password">Пароль:</label>
+        <input type="password" name="password" id="password" required>
+    </p>
+
+    <button type="submit">Войти</button>
+</form>
+
+<p>
+    Нет аккаунта?
+    <a href="{% url 'users:register' %}">Зарегистрироваться</a>
+</p>
 {% endblock %}
